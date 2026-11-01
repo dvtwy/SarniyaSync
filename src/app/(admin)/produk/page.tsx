@@ -32,8 +32,7 @@ export default async function ProdukPage() {
         <AddProductModal />
       </header>
 
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <ProductTableClient products={(products ?? []) as any} errorMessage={error?.message} />
+      <ProductTableClient products={products ?? []} errorMessage={error?.message} />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { createSupabaseBrowserClient } from "@/utils/supabase/client";
 import { useSidebar } from "@/context/sidebar-context";
+import LogoutModal from "@/components/LogoutModal";
 
 const partnerRoutes = {
   dashboard: "/dashboard-mitra",
@@ -121,6 +122,7 @@ export default function PartnerNavigation() {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   const { isSidebarOpen, setIsSidebarOpen } = useSidebar();
 
@@ -260,7 +262,7 @@ export default function PartnerNavigation() {
 
         <button
           type="button"
-          onClick={() => void handleLogout()}
+          onClick={() => setIsLogoutModalOpen(true)}
           disabled={isLoggingOut}
           title={!isSidebarOpen ? "Keluar Sesi" : undefined}
           className="group flex w-auto lg:w-full shrink-0 items-center justify-start rounded-xl h-10 px-3.5 text-xs font-semibold uppercase tracking-wider text-terracotta-clay bg-gray-50 border border-gray-200 shadow-sm transition-all duration-200 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 overflow-hidden"
@@ -290,6 +292,13 @@ export default function PartnerNavigation() {
           </span>
         </button>
       </div>
+
+      <LogoutModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={() => void handleLogout()}
+        isLoggingOut={isLoggingOut}
+      />
     </aside>
   );
 }

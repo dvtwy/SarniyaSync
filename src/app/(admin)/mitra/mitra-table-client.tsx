@@ -94,9 +94,8 @@ export default function MitraTableClient({ stores }: MitraTableClientProps) {
       } else {
         alert(`Gagal mengubah status: ${res.error}`);
       }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      alert(`Terjadi kesalahan: ${err.message || "Gagal memperbarui status"}`);
+    } catch (err: unknown) {
+      alert(`Terjadi kesalahan: ${err instanceof Error ? err.message : "Gagal memperbarui status"}`);
     } finally {
       setUpdatingStoreId(null);
     }
@@ -138,9 +137,8 @@ export default function MitraTableClient({ stores }: MitraTableClientProps) {
           setModalFeedback(null);
         }, 800);
       }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      setModalFeedback({ type: "error", text: err.message || "Gagal memperbarui pesan" });
+    } catch (err: unknown) {
+      setModalFeedback({ type: "error", text: err instanceof Error ? err.message : "Gagal memperbarui pesan" });
     } finally {
       setIsSaving(false);
     }

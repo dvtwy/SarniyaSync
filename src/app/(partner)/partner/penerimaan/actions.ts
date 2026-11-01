@@ -31,8 +31,8 @@ export async function receiveStockTransfer(transferId: string): Promise<ReceiveR
       return { error: error.message };
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (!data || !(data as any).success) {
+    const resultData = data as { success?: boolean } | null;
+    if (!resultData || !resultData.success) {
       return { error: "Penerimaan gagal diproses oleh server." };
     }
 

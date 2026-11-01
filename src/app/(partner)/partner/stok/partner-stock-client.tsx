@@ -61,7 +61,6 @@ export default function PartnerStockClient({ initialInventory }: PartnerStockCli
   const filteredAndSortedInventory = useMemo(() => {
     let result = [...initialInventory];
 
-    // 1. Filter Pencarian: Saring berdasarkan teks pencarian (nama atau SKU)
     const q = searchQuery.toLowerCase().trim();
     if (q) {
       result = result.filter(
@@ -72,14 +71,12 @@ export default function PartnerStockClient({ initialInventory }: PartnerStockCli
       );
     }
 
-    // 2. Filter Kategori: Saring data jika selectedCategory bukan 'Semua'
     if (selectedCategory !== "Semua") {
       result = result.filter(
         (item) => (item.category || "").toLowerCase() === selectedCategory.toLowerCase(),
       );
     }
 
-    // 3. Sorting Stok
     result.sort((a, b) => {
       if (stockSortOrder === "asc") {
         return a.stock_quantity - b.stock_quantity;
@@ -88,7 +85,6 @@ export default function PartnerStockClient({ initialInventory }: PartnerStockCli
         return b.stock_quantity - a.stock_quantity;
       }
 
-      // stockSortOrder === 'default': Kategori Alfabet -> Nama Produk Alfabet
       const katA = (a.category || "").toLowerCase();
       const katB = (b.category || "").toLowerCase();
       if (katA < katB) return -1;

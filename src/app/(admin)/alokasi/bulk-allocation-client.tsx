@@ -72,23 +72,19 @@ export default function BulkAllocationClient({
 
   const productsById = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
 
-  // Ambil nama toko mitra
   function formatStoreName(alloc: ExistingAllocation): string {
     return alloc.store_name?.trim() || "Toko tidak diketahui";
   }
 
-  // Set ID produk terpilih untuk pencarian instan
   const selectedProductIds = useMemo(
     () => new Set(selectedProducts.map((p) => p.product.id)),
     [selectedProducts],
   );
 
-  // Total unit yang akan dialokasikan
   const totalUnits = useMemo(() => {
     return selectedProducts.reduce((sum, item) => sum + item.quantity, 0);
   }, [selectedProducts]);
 
-  // Filtered Warehouse Products
   const filteredProducts = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
     if (!q) return products;
@@ -107,12 +103,9 @@ export default function BulkAllocationClient({
 
   const handleSelectProduct = (product: WarehouseProduct) => {
     setSelectedProducts((prev) => {
-      // Jika sudah ada, hapus (toggle off)
       if (prev.find((p) => p.product.id === product.id)) {
         return prev.filter((p) => p.product.id !== product.id);
       }
-      // Jika belum ada, masukkan dengan qty awal min(10, stok gudang)
-      // agar tidak langsung melewati batas stok tersedia
       const defaultQty = Math.min(10, Math.max(1, product.stock_quantity));
       return [...prev, { product, quantity: defaultQty }];
     });
@@ -121,12 +114,9 @@ export default function BulkAllocationClient({
 
   function handleSelectAll() {
     if (isAllSelected) {
-      // Hapus semua produk terfilter dari keranjang
       const filteredIds = new Set(filteredProducts.map((p) => p.id));
       setSelectedProducts((prev) => prev.filter((p) => !filteredIds.has(p.product.id)));
     } else {
-      // Masukkan semua produk terfilter
-      // Qty awal = min(10, stok gudang) agar tidak melewati stok tersedia
       setSelectedProducts((prev) => {
         const existingIds = new Set(prev.map((p) => p.product.id));
         const toAdd = filteredProducts
@@ -147,9 +137,9 @@ export default function BulkAllocationClient({
         if (item.product.id === productId) {
           const maxStock = Math.max(1, item.product.stock_quantity);
           if (operation === "increase") {
-            return { ...item, quantity: Math.min(maxStock, item.quantity + 10) }; // Naik per 10
+            return { ...item, quantity: Math.min(maxStock, item.quantity + 10) };
           } else if (operation === "decrease") {
-            return { ...item, quantity: Math.max(1, item.quantity - 10) }; // Turun per 10, minimal 1
+            return { ...item, quantity: Math.max(1, item.quantity - 10) };
           }
         }
         return item;

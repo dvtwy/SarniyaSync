@@ -18,14 +18,13 @@ export interface AdjustmentHistoryItem {
 }
 
 interface StockOpnameClientProps {
-  mitraId: string;
+  mitraId?: string;
   storeName: string;
   products: ProductOption[];
   initialHistory: AdjustmentHistoryItem[];
 }
 
 export default function StockOpnameClient({
-  mitraId,
   storeName,
   products,
   initialHistory,

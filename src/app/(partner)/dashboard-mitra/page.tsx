@@ -24,6 +24,37 @@ type RecentTransaction = {
   store_name: string;
 };
 
+type PartnerTransactionItem = {
+  name?: string;
+  quantity?: number | string;
+};
+
+type PartnerTransactionRow = {
+  id: string;
+  transaction_number: string;
+  total: number | string | null;
+  items: PartnerTransactionItem[] | null;
+  sold_at: string;
+  payment_method: string | null;
+  partner_store_id: string;
+};
+
+type LowStockInventoryRow = {
+  id: string;
+  stock_quantity: number | string;
+  partner_stores: { name: string | null } | { name: string | null }[] | null;
+  products: { sku: string | null; name: string | null; category: string | null; price: number | null } | { sku: string | null; name: string | null; category: string | null; price: number | null }[] | null;
+};
+
+type RecentTransactionRow = {
+  id: string;
+  transaction_number: string;
+  sold_at: string;
+  total: number;
+  payment_method: string | null;
+  partner_stores: { name: string | null } | { name: string | null }[] | null;
+};
+
 const numberFormatter = new Intl.NumberFormat("id-ID");
 const currencyFormatter = new Intl.NumberFormat("id-ID", {
   style: "currency",
@@ -124,7 +155,7 @@ export default async function PartnerDashboardPage() {
   const salesByDate: Record<string, { date: string; timestamp: number; total: number }> = {};
   const salesByProduct: Record<string, number> = {};
 
-  const { data: transactions } = await (supabase
+  const { data: transactions } = (await supabase
     .from("sales_transactions")
     .select(`
       id,
@@ -137,8 +168,9 @@ export default async function PartnerDashboardPage() {
     `)
     .in("partner_store_id", activeStoreIds)
     .gte("sold_at", thirtyDaysAgo)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .order("sold_at", { ascending: true }) as any);
+    .order("sold_at", { ascending: true })) as unknown as {
+    data: PartnerTransactionRow[] | null;
+  };
 
   if (transactions) {
     for (const tx of transactions) {
@@ -177,8 +209,7 @@ export default async function PartnerDashboardPage() {
 
         if (Array.isArray(tx.items)) {
           for (const item of tx.items) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const record = item as any;
+            const record = item as PartnerTransactionItem;
             if (record && typeof record === "object" && record.quantity && record.name) {
               const qty = Number(record.quantity);
               monthlyItemsSold += qty;
@@ -199,7 +230,7 @@ export default async function PartnerDashboardPage() {
     .sort((a, b) => b.quantity - a.quantity)
     .slice(0, 5);
 
-  const { data: lowStockData } = await (supabase
+  const { data: lowStockData } = (await supabase
     .from("partner_store_inventory")
     .select(`
       id,
@@ -209,13 +240,13 @@ export default async function PartnerDashboardPage() {
     `)
     .in("partner_store_id", activeStoreIds)
     .lt("stock_quantity", 10)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .order("stock_quantity", { ascending: true }) as any);
+    .order("stock_quantity", { ascending: true })) as unknown as {
+    data: LowStockInventoryRow[] | null;
+  };
 
   const lowStockItems: LowStockItem[] = [];
   if (lowStockData) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    lowStockData.forEach((inv: any) => {
+    lowStockData.forEach((inv) => {
       const product = Array.isArray(inv.products) ? inv.products[0] : inv.products;
       const store = Array.isArray(inv.partner_stores) ? inv.partner_stores[0] : inv.partner_stores;
 
@@ -232,7 +263,7 @@ export default async function PartnerDashboardPage() {
     });
   }
 
-  const { data: recentData } = await (supabase
+  const { data: recentData } = (await supabase
     .from("sales_transactions")
     .select(`
       id,
@@ -244,11 +275,11 @@ export default async function PartnerDashboardPage() {
     `)
     .in("partner_store_id", activeStoreIds)
     .order("sold_at", { ascending: false })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .limit(5) as any);
+    .limit(5)) as unknown as {
+    data: RecentTransactionRow[] | null;
+  };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const recentTransactions: RecentTransaction[] = (recentData ?? []).map((tx: any) => {
+  const recentTransactions: RecentTransaction[] = (recentData ?? []).map((tx) => {
     const store = Array.isArray(tx.partner_stores) ? tx.partner_stores[0] : tx.partner_stores;
     return {
       id: tx.id,

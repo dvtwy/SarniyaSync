@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, Filter, AlertTriangle, PackageX, DollarSign, ClipboardList } from "lucide-react";
+import { Search, PackageX, DollarSign, ClipboardList } from "lucide-react";
 
 export interface AdjustmentReportItem {
   id: string;

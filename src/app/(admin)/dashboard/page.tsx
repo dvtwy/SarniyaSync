@@ -35,6 +35,26 @@ type MonthlyTransactionRow = {
   partner_stores: { name: string | null } | { name: string | null }[] | null;
 };
 
+type AdminMitraInventoryRow = {
+  id: string;
+  stock_quantity: number;
+  partner_stores: { name: string | null } | { name: string | null }[] | null;
+  products: { sku: string | null; name: string | null; category: string | null } | { sku: string | null; name: string | null; category: string | null }[] | null;
+};
+
+type AdminRecentTxRow = {
+  id: string;
+  transaction_number: string;
+  sold_at: string;
+  total: number;
+  partner_stores: { name: string | null } | { name: string | null }[] | null;
+};
+
+type AdjustmentRow = {
+  quantity_changed: number | null;
+  products: { cost_price: number | null } | { cost_price: number | null }[] | null;
+};
+
 const numberFormatter = new Intl.NumberFormat("id-ID");
 const currencyFormatter = new Intl.NumberFormat("id-ID", {
   style: "currency",
@@ -130,9 +150,10 @@ export default async function AdminDashboardPage() {
         if (isThisMonth) {
           totalOmzet += total;
           
-          const storeName = Array.isArray(tx.partner_stores) 
-             ? tx.partner_stores[0]?.name 
-             : tx.partner_stores?.name || "Unknown Store";
+          const rawStore = Array.isArray(tx.partner_stores)
+            ? tx.partner_stores[0]
+            : tx.partner_stores;
+          const storeName: string = rawStore?.name?.trim() || "Unknown Store";
              
           salesByPartner[storeName] = (salesByPartner[storeName] || 0) + total;
 
@@ -236,7 +257,7 @@ export default async function AdminDashboardPage() {
       });
     }
 
-    const { data: mitraInventory, error: mitraError } = await (supabase
+    const { data: mitraInventory, error: mitraError } = (await supabase
       .from("partner_store_inventory")
       .select(`
         id,
@@ -245,13 +266,14 @@ export default async function AdminDashboardPage() {
         products ( sku, name, category )
       `)
       .lt("stock_quantity", 10)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .order("stock_quantity", { ascending: true }) as any);
+      .order("stock_quantity", { ascending: true })) as unknown as {
+      data: AdminMitraInventoryRow[] | null;
+      error: { message: string } | null;
+    };
 
     if (mitraError) throw mitraError;
     if (mitraInventory) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      mitraInventory.forEach((inv: any) => {
+      mitraInventory.forEach((inv) => {
         const product = Array.isArray(inv.products) ? inv.products[0] : inv.products;
         const store = Array.isArray(inv.partner_stores) ? inv.partner_stores[0] : inv.partner_stores;
         
@@ -271,7 +293,7 @@ export default async function AdminDashboardPage() {
     lowStockItems.sort((a, b) => a.stock - b.stock);
     const displayLowStockItems = lowStockItems.slice(0, 5);
 
-    const { data: recentData, error: recentError } = await (supabase
+    const { data: recentData, error: recentError } = (await supabase
       .from("sales_transactions")
       .select(`
         id,
@@ -281,13 +303,14 @@ export default async function AdminDashboardPage() {
         partner_stores ( name )
       `)
       .order("sold_at", { ascending: false })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .limit(5) as any);
+      .limit(5)) as unknown as {
+      data: AdminRecentTxRow[] | null;
+      error: { message: string } | null;
+    };
       
     if (recentError) throw recentError;
     if (recentData) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      recentTransactions = recentData.map((tx: any) => {
+      recentTransactions = recentData.map((tx) => {
         const store = Array.isArray(tx.partner_stores) ? tx.partner_stores[0] : tx.partner_stores;
         return {
             id: tx.id,
@@ -311,7 +334,7 @@ export default async function AdminDashboardPage() {
         .gte("created_at", startOfMonth);
 
       if (adjustmentsData) {
-        for (const item of adjustmentsData as any[]) {
+        for (const item of adjustmentsData as unknown as AdjustmentRow[]) {
           const qtyLost = Math.abs(Number(item.quantity_changed || 0));
           const prod = Array.isArray(item.products) ? item.products[0] : item.products;
           const cost = Number(prod?.cost_price || 0);

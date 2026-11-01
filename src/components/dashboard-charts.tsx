@@ -79,8 +79,7 @@ export default function DashboardCharts({
                   boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
                   fontSize: "12px",
                 }}
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                formatter={(value: any) => [currencyFormatter.format(Number(value)), "Pendapatan"]}
+                formatter={(value: unknown) => [currencyFormatter.format(Number(value) || 0), "Pendapatan"]}
                 labelStyle={{ color: "#111827", fontWeight: "bold", marginBottom: "3px" }}
               />
               <Bar

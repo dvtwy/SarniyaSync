@@ -81,8 +81,7 @@ export default function PartnerDashboardCharts({
                     border: "1px solid #e5e7eb",
                     boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
                   }}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  formatter={(value: any) => [currencyFormatter.format(Number(value)), "Pendapatan"]}
+                  formatter={(value: unknown) => [currencyFormatter.format(Number(value) || 0), "Pendapatan"]}
                   labelStyle={{ color: "#111827", fontWeight: "bold", marginBottom: "4px" }}
                 />
                 <Bar dataKey="total" fill="#9d5c4c" radius={[6, 6, 0, 0]} maxBarSize={44} />

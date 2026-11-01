@@ -78,8 +78,7 @@ export default async function AdminRiwayatPage() {
       break;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const page = (data ?? []) as any[];
+    const page = (data ?? []) as typeof rawTransactions;
     rawTransactions.push(...page);
     if (page.length < PAGE_SIZE) break;
   }

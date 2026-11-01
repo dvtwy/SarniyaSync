@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/utils/supabase/client";
 import { AppRole, getProfileRole } from "@/utils/supabase/auth";
 import { useSidebar } from "@/context/sidebar-context";
+import LogoutModal from "@/components/LogoutModal";
 
 type NavigationItem = { label: string; href: string };
 
@@ -125,6 +126,8 @@ export default function SidebarNavigation() {
   const [role, setRole] = useState<AppRole | null>(null);
   const [navigationItems, setNavigationItems] = useState<NavigationItem[]>([]);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [logoutError, setLogoutError] = useState("");
 
   const { isSidebarOpen, setIsSidebarOpen } = useSidebar();
 
@@ -203,9 +206,11 @@ export default function SidebarNavigation() {
 
   async function handleLogout() {
     setIsLoggingOut(true);
+    setLogoutError("");
     const supabase = createSupabaseBrowserClient();
     const { error } = await supabase.auth.signOut();
     if (error) {
+      setLogoutError(error.message);
       setIsLoggingOut(false);
       return;
     }
@@ -347,9 +352,15 @@ export default function SidebarNavigation() {
           </p>
         )}
 
+        {logoutError && isSidebarOpen && (
+          <p role="alert" className="mb-2.5 rounded-lg border border-rose-300 bg-rose-50/90 p-2 text-[10px] font-semibold text-rose-800 truncate">
+            {logoutError}
+          </p>
+        )}
+
         <button
           type="button"
-          onClick={() => void handleLogout()}
+          onClick={() => setIsLogoutModalOpen(true)}
           disabled={isLoggingOut}
           title={!isSidebarOpen ? "Keluar Sesi" : undefined}
           className="group flex w-auto lg:w-full shrink-0 items-center justify-start rounded-xl h-10 px-3.5 text-xs font-semibold uppercase tracking-wider text-terracotta-clay bg-gray-50 border border-gray-200 shadow-sm transition-all duration-200 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 overflow-hidden"
@@ -379,6 +390,13 @@ export default function SidebarNavigation() {
           </span>
         </button>
       </div>
+
+      <LogoutModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={() => void handleLogout()}
+        isLoggingOut={isLoggingOut}
+      />
     </aside>
   );
 }

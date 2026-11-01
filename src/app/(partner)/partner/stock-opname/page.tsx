@@ -1,8 +1,39 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
-import StockOpnameClient from "./stock-opname-client";
+import StockOpnameClient, {
+  AdjustmentHistoryItem,
+} from "./stock-opname-client";
+import type { ProductOption } from "@/components/partner/StockAdjustmentModal";
 
 export const dynamic = "force-dynamic";
+
+interface InventoryProductRelation {
+  id: string;
+  name: string;
+  sku: string | null;
+}
+
+interface InventoryQueryResult {
+  id: string;
+  product_id: string;
+  stock_quantity: number;
+  products: InventoryProductRelation | InventoryProductRelation[] | null;
+}
+
+interface StockAdjustmentProductRelation {
+  name: string | null;
+  sku: string | null;
+}
+
+interface StockAdjustmentQueryRow {
+  id: string;
+  mitra_id: string;
+  quantity_changed: number;
+  reason: string;
+  notes: string | null;
+  created_at: string;
+  products: StockAdjustmentProductRelation | StockAdjustmentProductRelation[] | null;
+}
 
 export default async function PartnerStockOpnamePage() {
   const supabase = await createSupabaseServerClient();
@@ -25,20 +56,22 @@ export default async function PartnerStockOpnamePage() {
     .select("id, product_id, stock_quantity, products(id, name, sku)")
     .eq("partner_store_id", storeId);
 
-  const productOptions = (inventoryData ?? [])
-    .map((row: any) => {
+  const productOptions: ProductOption[] = (
+    (inventoryData as unknown as InventoryQueryResult[]) ?? []
+  )
+    .map((row) => {
       const p = Array.isArray(row.products) ? row.products[0] : row.products;
       if (!p) return null;
       return {
-        id: p.id as string,
-        name: p.name as string,
-        sku: (p.sku as string) || "-",
+        id: p.id,
+        name: p.name,
+        sku: p.sku || "-",
         stock: Number(row.stock_quantity ?? 0),
       };
     })
-    .filter(Boolean);
+    .filter((item): item is ProductOption => Boolean(item));
 
-  let historyRecords: any[] = [];
+  let historyRecords: AdjustmentHistoryItem[] = [];
   try {
     // Pengambilan riwayat penyesuaian mencakup identitas user dan ID toko mitra
     const allowedMitraIds = Array.from(
@@ -56,7 +89,7 @@ export default async function PartnerStockOpnamePage() {
     }
 
     if (adjustments && adjustments.length > 0) {
-      historyRecords = adjustments.map((adj: any) => {
+      historyRecords = (adjustments as unknown as StockAdjustmentQueryRow[]).map((adj) => {
         const prod = Array.isArray(adj.products) ? adj.products[0] : adj.products;
         return {
           id: adj.id,
@@ -81,9 +114,8 @@ export default async function PartnerStockOpnamePage() {
     <StockOpnameClient
       mitraId={user.id}
       storeName={currentStore?.name ?? "Toko Mitra"}
-      products={productOptions as any}
+      products={productOptions}
       initialHistory={historyRecords}
     />
   );
 }
-

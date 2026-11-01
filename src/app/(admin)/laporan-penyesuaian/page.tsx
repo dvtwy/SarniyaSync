@@ -12,6 +12,22 @@ export const metadata = {
   description: "Monitoring log penyusutan barang rusak, hilang, dan kedaluwarsa dari seluruh cabang toko mitra.",
 };
 
+interface StockAdjustmentProductRelation {
+  name: string | null;
+  sku: string | null;
+  cost_price: number | null;
+}
+
+interface StockAdjustmentRecord {
+  id: string;
+  mitra_id: string;
+  quantity_changed: number;
+  reason: string;
+  notes: string | null;
+  created_at: string;
+  products: StockAdjustmentProductRelation | StockAdjustmentProductRelation[] | null;
+}
+
 export default async function AdminStockAdjustmentReportPage() {
   const supabase = await createSupabaseServerClient();
   const {
@@ -52,12 +68,12 @@ export default async function AdminStockAdjustmentReportPage() {
         )
       `)
       .order("created_at", { ascending: false })) as unknown as {
-      data: any[] | null;
+      data: StockAdjustmentRecord[] | null;
       error: { message: string } | null;
     };
 
     if (!adjError && adjustmentsData) {
-      adjustments = adjustmentsData.map((item: any) => {
+      adjustments = adjustmentsData.map((item: StockAdjustmentRecord) => {
         const prod = Array.isArray(item.products) ? item.products[0] : item.products;
         const matchedStore = storeMapByOwner.get(item.mitra_id) || storeMapById.get(item.mitra_id);
 

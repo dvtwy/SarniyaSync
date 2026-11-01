@@ -198,7 +198,6 @@ export default function InventoryPage({ searchParams = {} }: InventoryPageProps)
                 setProducts(refreshed);
                 setSuccessMessage("Produk berhasil ditambahkan.");
               } catch {
-                // ignore
               }
             }}
           />

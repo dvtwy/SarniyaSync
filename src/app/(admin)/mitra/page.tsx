@@ -1,7 +1,7 @@
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 import { getProfileRole } from "@/utils/supabase/auth";
 import { redirect } from "next/navigation";
-import MitraTableClient from "./mitra-table-client";
+import MitraTableClient, { StoreItem } from "./mitra-table-client";
 
 export const dynamic = "force-dynamic";
 
@@ -20,12 +20,37 @@ export default async function PartnerManagementPage() {
   const role = await getProfileRole(supabase, user.id);
   if (role !== "admin" && role !== "pemilik") redirect("/");
 
-  const { data: stores, error: storeError } = await supabase
+  const { data: storesData, error: storeError } = await supabase
     .from("partner_stores")
-    .select(
-      "id, owner_id, name, address, city, phone, is_active, status, status_message, owner:profiles!owner_id(full_name)",
-    )
+    .select("id, owner_id, name, address, city, phone, is_active, status, status_message")
     .order("name", { ascending: true });
+
+  const ownerIds = Array.from(new Set((storesData ?? []).map((s) => s.owner_id).filter(Boolean)));
+  let ownerMap = new Map<string, string>();
+
+  if (ownerIds.length > 0) {
+    const { data: profilesData } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", ownerIds);
+
+    if (profilesData) {
+      ownerMap = new Map(profilesData.map((p) => [p.id, p.full_name ?? ""]));
+    }
+  }
+
+  const stores: StoreItem[] = (storesData ?? []).map((s) => ({
+    id: s.id,
+    owner_id: s.owner_id,
+    name: s.name,
+    address: s.address,
+    city: s.city,
+    phone: s.phone,
+    is_active: Boolean(s.is_active),
+    status: s.status,
+    status_message: s.status_message,
+    owner: { full_name: ownerMap.get(s.owner_id) || "—" },
+  }));
 
   const errorMessage = storeError?.message ?? "";
 
@@ -58,17 +83,16 @@ export default async function PartnerManagementPage() {
           <div className="border-b border-gray-100 px-4 py-3 sm:px-5">
             <h2 className="text-base font-semibold text-gray-800">Daftar Toko Mitra</h2>
             <p className="mt-0.5 text-xs font-medium text-gray-500">
-              {stores?.length ?? 0} toko mitra terdaftar dalam ekosistem SarniyaSync
+              {stores.length} toko mitra terdaftar dalam ekosistem SarniyaSync
             </p>
           </div>
 
-          {!stores?.length ? (
+          {!stores.length ? (
             <p className="px-4 py-8 text-center text-xs font-medium text-[#7a8394]">
               Belum ada toko mitra yang terdaftar.
             </p>
           ) : (
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            <MitraTableClient stores={stores as any} />
+            <MitraTableClient stores={stores} />
           )}
         </section>
       )}

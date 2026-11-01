@@ -78,16 +78,13 @@ export default function PosCartForm({ stores, inventory }: PosCartFormProps) {
       const aKosong = a.stock <= 0;
       const bKosong = b.stock <= 0;
 
-      // 1. Prioritas 1: Ketersediaan Stok (stok <= 0 ditaruh di paling bawah)
       if (aKosong !== bKosong) return aKosong ? 1 : -1;
 
-      // 2. Prioritas 2: Kategori Abjad (A-Z)
       const katA = (a.category || "").toLowerCase();
       const katB = (b.category || "").toLowerCase();
       if (katA < katB) return -1;
       if (katA > katB) return 1;
 
-      // 3. Prioritas 3: Nama Produk Abjad (A-Z)
       const namaA = a.name.toLowerCase();
       const namaB = b.name.toLowerCase();
       if (namaA < namaB) return -1;
